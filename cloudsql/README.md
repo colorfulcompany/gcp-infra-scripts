@@ -7,6 +7,12 @@ awk -f instance-creator.awk instances.txt
 awk -f database-creator.awk databases.txt
 ```
 
+### 注意
+
+ * 変更には非対応
+ * インスタンス作成後にはデータベース接続情報のアプリケーションへの反映が必要
+    * 例えば App Engine に環境変数で渡す場合にはアプリケーションの再デプロイを行う必要がある
+
 ### databases.txt format
 
  * 1 database : desribed as multilines separated by blank line
