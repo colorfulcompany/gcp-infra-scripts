@@ -122,7 +122,7 @@ function options(bucket) {
 
   for (key in bucket) {
     if (key != "name") {
-      opts = opts " -" substr(key, 0, 1) " " bucket[key]
+      opts = opts " -" substr(key, 1, 1) " " bucket[key]
     }
   }
 
