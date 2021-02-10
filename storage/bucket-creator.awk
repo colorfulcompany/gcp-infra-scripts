@@ -110,7 +110,7 @@ function bucket_name(name) {
 # [param] Associative Array bucket
 #
 function create_bucket(bucket) {
-  system("gsutil mb " bucket_name(bucket["name"]) options(bucket))
+  system("gsutil mb " options(bucket) " " bucket_name(bucket["name"]))
 }
 
 #
