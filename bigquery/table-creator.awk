@@ -22,13 +22,12 @@ BEGIN {
   RS = ""
 }
 
-function store_schema_files(      i, filename, copied) {
+function store_schema_files(      i, filename, tablename) {
   if (ARGC > 2) {
     for (i = 0; i + 2 < ARGC; i++) {
       filename = ARGV[i+2]
-      copied = substr(filename, 0, length(filename))
-      sub(/\.[a-z]+$/, "", copied)
-      schema_files[copied] = filename
+      "basename " filename " .json" | getline tablename
+      schema_files[tablename] = filename
     }
     ARGC = 2
   }
