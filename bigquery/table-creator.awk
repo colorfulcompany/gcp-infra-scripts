@@ -2,7 +2,7 @@
 
 #
 # Usage:
-# awk -v project_id=<> -f table-creator.awk tables.txt
+# awk -v project_id=<> -f table-creator.awk tables.txt schema.json schema.json ...
 #
 BEGIN {
   if (!project_id) {
@@ -16,9 +16,22 @@ BEGIN {
 
   read_datasets(datasets)
   read_tables(tables)
+  store_schema_files()
 
   # change to multiline mode
   RS = ""
+}
+
+function store_schema_files(      i, filename, copied) {
+  if (ARGC > 2) {
+    for (i = 0; i + 2 < ARGC; i++) {
+      filename = ARGV[i+2]
+      copied = substr(filename, 0, length(filename))
+      sub(/\.[a-z]+$/, "", copied)
+      schema_files[copied] = filename
+    }
+    ARGC = 2
+  }
 }
 
 #
@@ -34,6 +47,9 @@ BEGIN {
       create_table(table)
     } else {
       print "bigquery table " table["name"] " already exists!"
+    }
+    if (schema_files[table["name"]]) {
+      update_schema(table, schema_files[table["name"]])
     }
   } else {
     print "[ERROR] dataset " table["dataset"] " is not exists! Please create dataset."
@@ -216,10 +232,24 @@ function dump_assoc(assoc) {
   }
 }
 
-function create_table(table, cmd) {
+#
+# [param] Associative Array table
+#
+function create_table(table,     cmd) {
   cmd = "bq mk --table" 
 
-  system(cmd options(table) " " table_name(table) " " schema_file(table))
+  system(cmd options(table) " " table_name(table))
+}
+
+#
+# [param] Associative Array table
+# [param] String filename
+#
+function update_schema(table, filename,     exit_status) {
+  exit_status = system("bq update " table_name(table) " " filename)
+  if (!exit_status) {
+    print "    schema updated."
+  }
 }
 
 # 

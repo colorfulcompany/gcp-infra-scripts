@@ -7,9 +7,9 @@
 awk -v project_id=<..> -f dataset-creator.awk datasets.txt
 ```
 
- 2. Create Table
+ 2. Create Table ( and update schema optionally )
 ```
-awk -v project_id=<..> -f table-creator.awk tables.txt
+awk -v project_id=<..> -f table-creator.awk tables.txt [schema.json [schema.json] ...]
 ```
 
 ※ Dataset と Table について、変更や削除には対応していない（作成のみ）
@@ -51,3 +51,6 @@ dataset: foobar_dataset
 expiration: 3600
 ```
 
+### schema.json
+
+see [Specifying a schema  \|  BigQuery  \|  Google Cloud](https://cloud.google.com/bigquery/docs/schemas)
