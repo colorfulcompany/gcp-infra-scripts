@@ -2,7 +2,7 @@
 
 #
 # Usage:
-# awk -v project_id=<> -f table-creator.awk tables.txt
+# awk -v project_id=<> -f dataset-creator.awk datasets.txt
 #
 BEGIN {
   if (!project_id) {
