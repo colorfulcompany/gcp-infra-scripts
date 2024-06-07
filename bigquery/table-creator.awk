@@ -175,6 +175,8 @@ function find_dataset(name) {
 }
 
 #
+# fully qualified table name
+#
 # [param] String name
 # [return] String
 #
