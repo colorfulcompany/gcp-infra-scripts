@@ -185,14 +185,6 @@ function table_name(table) {
 }
 
 #
-# [param] Associative Array table
-# [return] String
-#
-function schema_file(table) {
-  return "./cloudbuild/bigquery/schema/" table["schema"]
-}
-
-#
 # [param] String key
 # [return] Boolean
 #
