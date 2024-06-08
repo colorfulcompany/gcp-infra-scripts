@@ -13,9 +13,9 @@ awk -v project_id=$PROJECT_ID -f database-creator.awk databases.txt
  * インスタンス作成後にはデータベース接続情報のアプリケーションへの反映が必要
     * 例えば App Engine に環境変数で渡す場合にはアプリケーションの再デプロイを行う必要がある
 
-### databases.txt format
+### config file format
 
- * 1 database : desribed as multilines separated by blank line
+ * 1 instance / database : described as multilines separated by blank line
  * job flag : YAML-like tagged ( separator is `: ` not `:` )
 
 ### example
