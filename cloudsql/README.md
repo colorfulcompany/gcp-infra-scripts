@@ -3,8 +3,8 @@
 ### Usage
 
 ```
-awk -f instance-creator.awk instances.txt
-awk -f database-creator.awk databases.txt
+awk -v project_id=$PROJECT_ID -f instance-creator.awk instances.txt
+awk -v project_id=$PROJECT_ID -f database-creator.awk databases.txt
 ```
 
 ### 注意
