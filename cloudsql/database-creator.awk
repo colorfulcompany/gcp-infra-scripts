@@ -2,10 +2,20 @@
 
 #
 # Usage:
-# awk -f database-creator.awk databases.txt
+# awk -v <project_id=PROJECT_ID> -f database-creator.awk databases.txt
 #
+function usage() {
+  print "Usage:"
+  print "awk -v <project_id=PROJECT_ID> -f database-creator.awk databases.txt"
+}
 
 BEGIN {
+  if (!project_id) {
+    print "project_id not given"
+    usage()
+    exit 1
+  }
+
   gcloud_cmd = "gcloud sql"
   true = 1
   false = 0

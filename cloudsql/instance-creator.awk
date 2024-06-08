@@ -2,10 +2,20 @@
 
 #
 # Usage:
-# awk -f instance-creator.awk instances.txt
+# awk -v <project_id=PROJECT_ID> -f instance-creator.awk instances.txt
 #
+function usage() {
+  print "Usage:"
+  print "awk -v <project_id=PROJECT_ID> -f instance-creator.awk instances.txt"
+}
 
 BEGIN {
+  if (!project_id) {
+    print "project_id not given"
+    usage()
+    exit 1
+  }
+
   gcloud_cmd = "gcloud sql instances"
   true = 1
   false = 0
