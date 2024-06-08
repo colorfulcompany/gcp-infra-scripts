@@ -28,9 +28,24 @@ tier: db-f1-micro
 region: us-central1
 ```
 
+see [gcloud sql instances create  \|  Google Cloud CLI Documentation](https://cloud.google.com/sdk/gcloud/reference/sql/instances/create)
+
  * databases.txt
 ```
 name: database
 instance: instance-name
 charset: UTF8
+collation: ja-JP-x-icu
+```
+
+see [gcloud sql databases create  \|  Google Cloud CLI Documentation](https://cloud.google.com/sdk/gcloud/reference/sql/databases/create)
+
+eg)
+
+ * [PostgreSQL: Documentation: 16: 24\.2\. Collation Support](https://www.postgresql.org/docs/current/collation.html)
+
+try
+
+```
+$ psql -c "select collname, collcollate, collctype from pg_collation where collname LIKE 'ja%' postgres"
 ```
