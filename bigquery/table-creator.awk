@@ -22,6 +22,13 @@ BEGIN {
   RS = ""
 }
 
+#
+# detect table name from schema file name and convert them to array
+#
+# abc.json -> table `abc` -> schema_files[abc] = abc.json
+#
+# and remove schema json files from command line args
+#
 function store_schema_files(      i, filename, tablename) {
   if (ARGC > 2) {
     for (i = 0; i + 2 < ARGC; i++) {
@@ -61,7 +68,7 @@ function store_schema_files(      i, filename, tablename) {
 #
 function usage() {
   print "Usage:"
-  print "awk -v project_id=<..> -f bucket-creator.awk buckets.txt"
+  print "awk -v project_id=<..> -f table-creator.awk tables.txt schema.json schema.json ..."
 }
 
 #
