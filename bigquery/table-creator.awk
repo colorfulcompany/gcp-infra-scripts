@@ -26,7 +26,8 @@ function store_schema_files(      i, filename, tablename) {
   if (ARGC > 2) {
     for (i = 0; i + 2 < ARGC; i++) {
       filename = ARGV[i+2]
-      "basename " filename " .json" | getline tablename
+      cmd = "basename " filename " .json"
+      cmd | getline tablename
       schema_files[tablename] = filename
     }
     ARGC = 2
