@@ -2,7 +2,7 @@
 
 #
 # Usage:
-# awk -v project_id=<> -f table-creator.awk tables.txt schema.json schema.json ...
+# awk -v project_id=<> -f table-creator.awk tables.txt [schema.json [schema.json] ...]
 #
 BEGIN {
   if (!project_id) {
@@ -68,7 +68,7 @@ function store_schema_files(      i, filename, tablename) {
 #
 function usage() {
   print "Usage:"
-  print "awk -v project_id=<..> -f table-creator.awk tables.txt schema.json schema.json ..."
+  print "awk -v project_id=<..> -f table-creator.awk tables.txt [schema.json [schema.json] ...]"
 }
 
 #
