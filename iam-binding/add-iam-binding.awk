@@ -60,6 +60,8 @@ function account(name) {
     return "serviceAccount:" cloudbuild_account()
   } else if (is_appengine_account(name)) {
     return "serviceAccount:" appengine_account()
+  } else if (is_computeengine_account(name)) {
+    return "serviceAccount:" computeengine_account()
   } else {
     return name
   }
@@ -78,6 +80,21 @@ function cloudbuild_account() {
 #
 function is_cloudbuild_account(name) {
   return name == "cloudbuild.gserviceaccount.com"
+}
+
+#
+# [return] String
+#
+function computeengine_account() {
+  return project_number "-compute@developer.gserviceaccount.com"
+}
+
+#
+# [param] String name
+# [return] Boolean
+#
+function is_computeengine_account(name) {
+  return name == "compute.gserviceaccount.com"
 }
 
 #
