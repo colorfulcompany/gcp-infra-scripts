@@ -10,7 +10,7 @@ awk -v project_id=<..> -v project_number=<..> -f add-iam-binding.awk bindings.tx
 
  * 1 binding : described as multilines separated by blank line
  * member and roles are listed raw string
- * app engine service account and cloud build service account should be abbreviated only in domain part
+ * some service accounts are expended to a canonical address complemented by the project id
 
 ### example
 
@@ -28,3 +28,15 @@ user:foobar@example.com
 roles/storage.objectAdmin
 roles/editor
 ```
+
+### special service accounts
+
+ * cloudbuild.gserviceaccount.com
+     * Legacy CloudBuild Service Account
+     * -> \<project number\>@cloudbuild.gserviceaccount.com
+ * appspot.gserviceaccount.com
+     * App Engine Default Service Account
+	 * -> \<project number\>@appspot.gserviceaccount.com
+ * compute.gserviceaccount.com
+     * Compute Engine Default Service Account
+     * -> \<project number\>-compute@developer.gserviceaccount.com
