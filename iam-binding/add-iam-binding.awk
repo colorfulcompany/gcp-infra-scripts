@@ -62,6 +62,8 @@ function account(name) {
     return "serviceAccount:" appengine_account()
   } else if (is_computeengine_account(name)) {
     return "serviceAccount:" computeengine_account()
+  } else if (is_service_agent(name)) {
+    return "serviceAccount:" service_agent(name)
   } else {
     return name
   }
@@ -111,6 +113,22 @@ function appengine_account() {
 #
 function is_appengine_account(name) {
   return name == "appspot.gserviceaccount.com"
+}
+
+#
+# [param] String name
+# [return] String
+#
+function service_agent(name) {
+  return "service-" project_number "@" name ".iam.gserviceaccount.com"
+}
+
+#
+# [param] String name
+# [return] Boolean
+#
+function is_service_agent(name) {
+  return name ~ /^gcp-sa-[^.]+/
 }
 
 #

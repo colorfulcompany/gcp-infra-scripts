@@ -21,6 +21,13 @@ roles/secretmanager.secretAccessor
 roles/cloudsql.admin
 ```
 
+or
+
+```
+gcp-sa-artifactregistry
+roles/storage.objectViewer
+```
+
 or 
 
 ```
