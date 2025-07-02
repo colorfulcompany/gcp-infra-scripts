@@ -144,11 +144,14 @@ function is_service_agent(name) {
 # [param] Array
 # [return] Number
 #
-function split_to_assoc(record, assoc) {
+function split_to_assoc(record, assoc,    lines, roles) {
   split_to_lines(record, lines)
 
+  split("", assoc)
+  split("", roles)
   size = 0
   role_size = 0
+
   for (key in lines) {
     line = lines[key]
     if (line == "") continue
