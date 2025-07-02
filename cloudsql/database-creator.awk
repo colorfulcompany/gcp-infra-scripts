@@ -120,9 +120,12 @@ function read_databases(databases, i, database, header, cmd) {
 # [param] Array
 # [return] Number
 #
-function split_to_assoc(record, assoc) {
+function split_to_assoc(record, assoc,    lines, capture) {
   split_to_lines(record, lines)
+
+  split("", assoc)
   size = 0
+
   for (key in lines) {
     line = lines[key]
     if (line != "") {
