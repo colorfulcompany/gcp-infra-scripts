@@ -114,9 +114,12 @@ function split_to_lines(record, lines) {
 # [param] Array
 # [return] Number
 #
-function split_to_assoc(record, assoc) {
+function split_to_assoc(record, assoc,    lines, capture) {
   split(record, lines, /\n/)
+
+  split("", assoc)
   size = 0
+
   for (key in lines) {
     line = lines[key]
     if (line != "") {
