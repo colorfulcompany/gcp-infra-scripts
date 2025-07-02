@@ -150,15 +150,14 @@ function split_to_assoc(record, assoc,    lines, roles) {
   split("", assoc)
   split("", roles)
   size = 0
-  role_size = 0
 
   for (key in lines) {
     line = lines[key]
     if (line == "") continue
 
     if (line ~ /^roles\//) {
-      roles[role_size] = line
-      role_size++
+      roles[size] = line
+      size++
     } else {
       member = line
     }
