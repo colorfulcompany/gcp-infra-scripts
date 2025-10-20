@@ -3,14 +3,18 @@
 #
 # Usage:
 #
-# awk -f scheduler.awk schedules.txt
+# awk [-v region=$REGION] -f scheduler.awk schedules.txt
+#
+# If the App Engine region is already set, it will be used as the default
+# and the list can be retrieved without explicitly specifying the region.
+# Otherwise, the region must be explicitly specified.
 #
 
 BEGIN {
   true = 1
   false = 0
   gcloud_cmd = "gcloud beta scheduler jobs"
-  read_jobs(jobs)
+  read_jobs(jobs, region)
 
   RS = ""
 }
@@ -20,33 +24,49 @@ BEGIN {
 #
 {
   split_to_assoc($0, job)
-  state = jobs[job["id"]]
+  deployed_state = jobs[job["id"],"state"]
+  deployed_region = jobs[job["id"],"location"]
 
-  if (length(state) > 0) {
-    if (state == "ENABLED") {
-      update_job(job)
+  if (job["location"] && (job["location"] != region)) {
+    msg = "Job \"" job["id"] "\" has different region " "\"" job["location"] "\""
+    if (region) {
+      msg = msg " ( than \"" region "\" )"
+    }
+    msg = msg ". Skipped."
+    print msg
+    next
+  }
+
+  if (length(deployed_state) > 0) {
+    if (deployed_state == "ENABLED") {
+      update_job(job, region)
     } else {
-      # job は ENABLED でないと update できない
+      # job's state must be ENABLED for update
       print "Job \"" job["id"] "\" exists, but not ENABLED. Nothing to do."
     }
   } else {
-    create_job(job)
+    create_job(job, region)
   }
 }
 
 #
-# ID   ....  STATE
-# job1       ENABLED
-# job2       PAUSE
+# ID   LOCATION        ....  STATE
+# job1 us-central1           ENABLED
+# job2 asia-northeast1       PAUSE
 #
-# -> { job2: "ENABLED", job2: "PAUSE" }
+# -> [job1, state] = "ENABLED"
+#    [job2, state] = "PAUSE"
+#    [job1, location] = "us-central1"
+#    [job2, location] = "asia-northeast1"
 #
 # [param] Associative Array jobs
 #
-function read_jobs(jobs) {
+function read_jobs(jobs, region) {
   header = true
 
   cmd = gcloud_cmd " list"
+  if (region) { cmd = cmd " --location " region }
+
   while ((cmd | getline line) > 0) {
     if (header) {
       header = false
@@ -54,8 +74,8 @@ function read_jobs(jobs) {
     }
 
     $0 = line
-    # ID = STATE
-    jobs[$1] = $NF
+    jobs[$1,"location"] = $2
+    jobs[$1,"state"] = $NF
 
     line_num++
   }
