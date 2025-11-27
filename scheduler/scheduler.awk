@@ -3,7 +3,7 @@
 #
 # Usage:
 #
-# awk [-v region=$REGION] -f scheduler.awk schedules.txt
+# awk [-v region=$REGION] [-v dry_run=1] -f scheduler.awk schedules.txt
 #
 # If the App Engine region is already set, it will be used as the default
 # and the list can be retrieved without explicitly specifying the region.
@@ -39,13 +39,13 @@ BEGIN {
 
   if (length(deployed_state) > 0) {
     if (deployed_state == "ENABLED") {
-      update_job(job, region)
+      update_job(job)
     } else {
       # job's state must be ENABLED for update
       print "Job \"" job["id"] "\" exists, but not ENABLED. Nothing to do."
     }
   } else {
-    create_job(job, region)
+    create_job(job)
   }
 }
 
@@ -83,12 +83,20 @@ function read_jobs(jobs, region) {
 
 function create_job(job) {
   print gcloud_cmd " create " job["type"] " " job["id"] build_options(job)
-  system(gcloud_cmd " create " job["type"] " " job["id"] build_options(job))
+  if (dry_run) {
+    print "will not execute create_job"
+  } else {
+    system(gcloud_cmd " create " job["type"] " " job["id"] build_options(job))
+  }
 }
 
 function update_job(job) {
   print gcloud_cmd " update " job["type"] " " job["id"] build_options(job)
-  system(gcloud_cmd " update " job["type"] " " job["id"] build_options(job))
+  if (dry_run) {
+    print "will not execute update_job"
+  } else {
+    system(gcloud_cmd " update " job["type"] " " job["id"] build_options(job))
+  }
 }
 
 #
@@ -102,7 +110,7 @@ function build_options(job) {
   opts = ""
 
   for (key in job) {
-    if (key != "id" && key != "type") {
+    if (key != "id" && key != "type" && job[key]) {
       opts = opts " --" key "='" job[key] "'"
     }
   }
