@@ -1,0 +1,83 @@
+#
+# Usage:
+#   docker build -t <%= "#{app_name}-builder" %> -f <%= [out_dir, "Dockerfile.builder"].compact.join("/") %> .
+#
+#   docker run -v .:/workspace <%= "#{app_name}-builder" %> bundle exec vite build
+#
+
+FROM node:<%= node_version %>-slim as node
+
+#
+# Install and Store Dependencies
+#
+
+FROM ruby:<%= ruby_version %> as ruby_dev
+
+WORKDIR /workspace
+
+ENV BUNDLE_APP_CONFIG=/workspace/.bundle
+
+<% if system_requirements[:builder] -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends <%= system_requirements[:builder] %>
+<% else -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends
+<% end -%>
+
+RUN mkdir -p /opt
+
+COPY --from=node /usr/local/bin/node /usr/local/bin
+COPY --from=node <%= yarn_path %> /opt/yarn
+LABEL YARN_VERSION=<%= yarn_version %>
+
+COPY Gemfile Gemfile
+COPY Gemfile.lock Gemfile.lock
+COPY package.json package.json
+<% if node_pm[:lockfile] -%>
+COPY <%= node_pm[:lockfile] %> <%= node_pm[:lockfile] %>
+<% end -%>
+
+ENV NODE_ENV=development
+
+RUN BUNDLE_APP_CONFIG=$PWD/.bundle && \
+    bundle config set --local path vendor && \
+    bundle config set --local without development:test && \
+    bundle install && \
+    ln -s /opt/yarn/bin/yarn /usr/local/bin && \
+    <%= node_pm[:manager] %> install
+
+RUN mkdir -p /packages/ && \
+    cp -r .bundle /packages/.bundle && \
+    cp -r vendor /packages/vendor && \
+    cp -r node_modules /packages/node_modules
+
+#
+# Final image ( Restore Dependencies more light image )
+#
+
+FROM ruby:<%= ruby_version %>-slim
+
+WORKDIR /workspace
+ENV BUNDLE_APP_CONFIG=/workspace/.bundle
+
+<% if system_requirements[:runner] -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends <%= system_requirements[:runner] %>
+<% else -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends
+<% end -%>
+
+RUN mkdir -p /opt
+COPY --from=node /usr/local/bin/node /usr/local/bin
+COPY --from=node <%= yarn_path %> /opt/yarn
+COPY --from=ruby_dev /packages/node_modules /packages/node_modules
+COPY --from=ruby_dev /packages/vendor /packages/vendor
+COPY --from=ruby_dev /packages/.bundle /packages/.bundle
+
+ENV MODE=production
+ENV VITE_RUBY_MODE=productoin
+ENV NODE_ENV=production
+
+CMD cp -fr /packages/.bundle . && \
+    cp -fr /packages/vendor . && \
+    cp -fr /packages/node_modules .
+
+ENTRYPOINT ["bash", "-c"]

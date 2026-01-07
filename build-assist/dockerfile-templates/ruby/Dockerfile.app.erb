@@ -1,0 +1,24 @@
+#
+# Usage:
+#   docker build -t <%= "#{app_name}-<proc>" %> \
+#     [--build-arg RUNNER=<runner-image>] \
+#     -f <%= [out_dir, "Dockerfile.app"].compact.join("/") %> .
+#
+
+ARG RUNNER=<%= app_name %>-runner
+
+FROM $RUNNER as runner
+
+WORKDIR /workspace
+
+COPY . .
+
+RUN cp -r /packages/* /workspace && \
+    cp -r /packages/.bundle /workspace/.bundle && \
+    rm -r /packages/*
+
+<% procfile.each do |proc, cmd| -%>
+FROM runner as <%= proc %>
+
+CMD <%= cmd %>
+<% end %>

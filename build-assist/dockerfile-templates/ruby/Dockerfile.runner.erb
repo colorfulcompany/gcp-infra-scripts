@@ -1,0 +1,52 @@
+#
+# Usage:
+#   docker build -t <%= "#{app_name}-runner" %> -f <%= [out_dir, "Dockerfile.runner"].compact.join("/") %> .
+#
+
+#
+# Install and Store Dependencies
+#
+
+FROM ruby:<%= ruby_version %> as ruby_dev
+
+WORKDIR /workspace
+
+ENV BUNDLE_APP_CONFIG=/workspace/.bundle
+
+<% if system_requirements[:builder] -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends <%= system_requirements[:builder] %>
+<% else -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends
+<% end -%>
+
+RUN mkdir -p /opt
+
+COPY Gemfile Gemfile
+COPY Gemfile.lock Gemfile.lock
+
+RUN BUNDLE_APP_CONFIG=$PWD/.bundle && \
+    bundle config set --local path vendor && \
+    bundle config set --local without development:test && \
+    bundle install
+
+RUN mkdir -p /packages/ && \
+    cp -r .bundle /packages/.bundle && \
+    cp -r vendor /packages/vendor
+
+#
+# Final image ( Restore Dependencies more light image )
+#
+
+FROM ruby:<%= ruby_version %>-slim
+
+WORKDIR /workspace
+ENV BUNDLE_APP_CONFIG=/workspace/.bundle
+
+<% if system_requirements[:runner] -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends <%= system_requirements[:runner] %>
+<% else -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends
+<% end -%>
+
+COPY --from=ruby_dev /packages/vendor /packages/vendor
+COPY --from=ruby_dev /packages/.bundle /packages/.bundle
