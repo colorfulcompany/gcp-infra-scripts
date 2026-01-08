@@ -6,6 +6,8 @@
 apt-get update && apt-get install -y ruby
 ```
 
+`gcloud artifacts repositories list`'s output is too complex by awk ...
+
 #### example
 
 ```yaml
