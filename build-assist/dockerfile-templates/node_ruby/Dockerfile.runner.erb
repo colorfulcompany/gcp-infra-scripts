@@ -1,0 +1,26 @@
+#
+# Usage:
+#   docker build -t <%= "#{app_name}-runner" %> \
+#     [--build-arg BUILDER=<builder-image>] \
+#     -f <%= [out_dir, "Dockerfile.runner"].compact.join("/") %> .
+#
+
+ARG BUILDER=<%= app_name %>-builder
+
+FROM $BUILDER as builder
+
+FROM ruby:<%= ruby_version %>-slim
+
+WORKDIR /workspace
+ENV BUNDLE_APP_CONFIG=/workspace/.bundle
+
+<% if system_requirements[:runner] -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends <%= system_requirements[:runner] %>
+<% else -%>
+RUN apt-get update && apt-get install -y -q --no-install-recommends
+<% end -%>
+
+RUN mkdir -p /packages
+
+COPY --from=builder /packages/.bundle /packages/.bundle
+COPY --from=builder /packages/vendor /packages/vendor
