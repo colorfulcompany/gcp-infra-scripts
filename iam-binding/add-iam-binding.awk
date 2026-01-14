@@ -30,7 +30,8 @@ BEGIN {
   split_to_assoc($0, binding)
   cmd = gcloud_cmd " " project_id options(binding)
   print cmd
-  system(cmd)
+  failure = system(cmd)
+  if (failure) exit 1
 }
 
 #
