@@ -2,6 +2,10 @@
 
 #
 # Usage:
+#   awk -v project_id=PROJECT_ID -v project_number=PROJECT_NUMBER \
+#     -f add-iam-binding.awk iam-bindings.txt
+#
+# require project_number for automatically complement fully qualified account address
 #
 function usage() {
   print "Usage:"
@@ -18,7 +22,7 @@ BEGIN {
   true = 1
   false = 0
   gcloud_cmd = "gcloud projects add-iam-policy-binding"
-  
+
   # multiline mode
   RS = ""
 }
@@ -40,7 +44,7 @@ BEGIN {
 #
 function options(binding) {
   opts = ""
-  
+
   for (key in binding) {
     if (key == "member") {
       opts = opts " --member " account(binding[key])
@@ -49,14 +53,35 @@ function options(binding) {
     }
   }
 
+  print opts
   return opts
 }
 
 #
+# [param] String line
+# [return] Boolean
+#
+function is_account_line(line) {
+  return (line ~ /^account:/) || (line !~ /^roles\//)
+}
+
+#
+# support account types:
+#
+#  * human users
+#  * default service accounts
+#  * service agents
+#  * legacy cloud build service account
+#  * custom service accounts
+#
+# (account:)?compute\.gserviceaccount\.com -> serviceAccount:xxxx-computer@developer.gserviceaccount.com
+# (account:)?service_account:builder -> serviceAccount:builder@${project_number}.iam.gserviceaccount.com
+#
+#
 # [param] String name
 # [return] String
 #
-function account(name) {
+function account(name,    tmp) {
   if (is_cloudbuild_account(name)) {
     return "serviceAccount:" cloudbuild_account()
   } else if (is_appengine_account(name)) {
@@ -65,9 +90,48 @@ function account(name) {
     return "serviceAccount:" computeengine_account()
   } else if (is_service_agent(name)) {
     return "serviceAccount:" service_agent(name)
+  } else if (is_custom_service_account(name)) {
+    return "serviceAccount:" custom_service_account(trim_resource_type(name))
+  } else if (is_account_line(name)) {
+    return trim_resource_type(name)
   } else {
     return name
   }
+}
+
+#
+# [param] String resource
+# [return] String
+#
+function trim_resource_type(resource,     tmp) {
+  if (/^(user|group|serviceAccount):/) {
+    return resource
+  } else if (/^[^:]+:/) {
+    tmp = resource
+    sub(/^[^:]+:/, "", tmp)
+    return tmp
+  } else {
+    return resource
+  }
+}
+
+#
+# [param] String name
+# [return] String
+#
+function custom_service_account(name,     trimmed_name) {
+  trimmed_name = name
+  sub(/^service_account:/, "", trimmed_name)
+
+  return trimmed_name "@" project_number ".iam.gserviceaccount.com"
+}
+
+#
+# [param] String name
+# [return] Boolean
+#
+function is_custom_service_account(name) {
+  return name ~ /^(account:)?service_account:[^@]+$/
 }
 
 #
@@ -82,7 +146,7 @@ function cloudbuild_account() {
 # [return] Boolean
 #
 function is_cloudbuild_account(name) {
-  return name == "cloudbuild.gserviceaccount.com"
+  return name ~ /^(account:)?cloudbuild\.gserviceaccount\.com$/
 }
 
 #
@@ -97,7 +161,7 @@ function computeengine_account() {
 # [return] Boolean
 #
 function is_computeengine_account(name) {
-  return name == "compute.gserviceaccount.com"
+  return name ~ /^(account:)?compute\.gserviceaccount\.com$/
 }
 
 #
@@ -113,7 +177,7 @@ function appengine_account() {
 # [return] String
 #
 function is_appengine_account(name) {
-  return name == "appspot.gserviceaccount.com"
+  return name ~ /^(account:)?appspot\.gserviceaccount\.com$/
 }
 
 #
@@ -129,7 +193,7 @@ function service_agent(name) {
 # [return] Boolean
 #
 function is_service_agent(name) {
-  return name ~ /^gcp-sa-[^.]+/
+  return name ~ /^(account:)?gcp-sa-[^.]+/
 }
 
 #
@@ -140,6 +204,12 @@ function is_service_agent(name) {
 # tag で split
 # して assoc array に変換する必要あり
 # 終端の空行はレコードに含まれてしまうので trim している
+#
+# {
+#   member: xxx,
+#   role0: yyy,
+#   role1: zzz
+# }
 #
 # [param] String
 # [param] Array
@@ -159,15 +229,16 @@ function split_to_assoc(record, assoc,    lines, roles) {
     if (line ~ /^roles\//) {
       roles[size] = line
       size++
-    } else {
-      member = line
+    } else if (is_account_line(line)) {
+      member = trim_resource_type(line)
     }
   }
+
   assoc["member"] = member
   for (i in roles) {
     assoc["role", i] = roles[i]
   }
-  
+
   return size
 }
 
