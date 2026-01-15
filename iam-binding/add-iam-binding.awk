@@ -21,10 +21,20 @@ BEGIN {
 
   true = 1
   false = 0
-  gcloud_cmd = "gcloud projects add-iam-policy-binding"
+  define()
 
   # multiline mode
   RS = ""
+}
+
+function define() {
+  resources[0] = "account"
+  cmd_write[0] = "gcloud projects add-iam-policy-binding"
+  cmd_read[0] = "gcloud projects get-iam-policy"
+
+  resources[1] = "run_service"
+  cmd_write[1] = "gcloud run services add-iam-policy-binding"
+  cmd_read[1] = "gcloud run services get-iam-policy"
 }
 
 #
@@ -34,16 +44,34 @@ BEGIN {
   role_size = split_to_assoc($0, binding)
   options_by_roles(binding, role_size, options)
 
+  resource = binding["resource"]
   for (i in options) {
-    cmd = gcloud_cmd " " project_id options[i] " > /dev/null"
+    for (pos in resources) {
+      if (resources[pos] == binding["resource"]) break
+    }
+
+    if (resource == "acount") {
+      cmd = cmd_write[pos] " " project_id options[i] " > /dev/null"
+    } else {
+      cmd = cmd_write[pos] " " options[i] " > /dev/null"
+    }
     print cmd
     failure = system(cmd)
     if (failure) exit 1
   }
 
-  cmd = "gcloud projects get-iam-policy " project_id
+  if (resource == "account") {
+    cmd = cmd_read[pos] " " project_id
+  } else {
+    split(options[0], c, / +/)
+
+    cmd = cmd_read[pos] " " c[1]
+  }
   print cmd
   system(cmd)
+}
+
+function command(resource) {
 }
 
 #
@@ -52,12 +80,19 @@ BEGIN {
 # [param] Associative Array options
 # [return] void
 #
-function options_by_roles(binding, role_size, options,      member) {
-  member = ""
+function options_by_roles(binding, role_size, options,      resource) {
   split("", options)
 
-  for (i = 0; i < role_size; i++) {
-    options[i] = " --member " account(binding["member"]) " --role " binding["role", i]
+  resource = binding["resource"]
+
+  if (resource == "account") {
+    for (i = 0; i < role_size; i++) {
+      options[i] = " --member " account(binding["member"]) " --role " binding["role", i]
+    }
+  } else {
+    for (i = 0; i < role_size; i++) {
+      options[i] = binding["target"] " --role " binding["role", i]
+    }
   }
 }
 
@@ -66,7 +101,30 @@ function options_by_roles(binding, role_size, options,      member) {
 # [return] Boolean
 #
 function is_account_line(line) {
-  return (line ~ /^account:/) || (line !~ /^roles\//)
+  if (line ~ /^(account:)?(user|group|serviceAccount|service_account):/) {
+    return true
+  } else if (line !~ /^roles\//) {
+    if (line ~ /^[^:]+:/) {
+      return false
+    } else {
+      return true
+    }
+  }
+}
+
+#
+# [param] String line
+# [param] Array resource_and_target
+#
+function split_resource_line(line, resource_and_target) {
+  if (is_account_line(line)) {
+    resource = "account"
+    target = line
+  } else {
+    match(line, /^[^:]+:/)
+    resource_and_target[0] = substr(line, RSTART, RLENGTH - 1)
+    resource_and_target[1] = substr(line, RSTART + RLENGTH)
+  }
 }
 
 #
@@ -210,6 +268,7 @@ function is_service_agent(name) {
 # 終端の空行はレコードに含まれてしまうので trim している
 #
 # {
+#   resource: account,
 #   member: xxx,
 #   role0: yyy,
 #   role1: zzz
@@ -234,11 +293,15 @@ function split_to_assoc(record, assoc,    lines, roles) {
       roles[size] = line
       size++
     } else if (is_account_line(line)) {
-      member = line
+      assoc["resource"] = "account"
+      assoc["member"] = line
+    } else {
+      split_resource_line(line, resource_and_target)
+      assoc["resource"] = resource_and_target[0]
+      assoc["target"] = resource_and_target[1]
     }
   }
 
-  assoc["member"] = member
   for (i in roles) {
     assoc["role", i] = roles[i]
   }
