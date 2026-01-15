@@ -31,30 +31,34 @@ BEGIN {
 # main
 #
 {
-  split_to_assoc($0, binding)
-  cmd = gcloud_cmd " " project_id options(binding)
+  role_size = split_to_assoc($0, binding)
+  options_by_roles(binding, role_size, options)
+
+  for (i in options) {
+    cmd = gcloud_cmd " " project_id options[i] " > /dev/null"
+    print cmd
+    failure = system(cmd)
+    if (failure) exit 1
+  }
+
+  cmd = "gcloud projects get-iam-policy " project_id
   print cmd
-  failure = system(cmd)
-  if (failure) exit 1
+  system(cmd)
 }
 
 #
 # [param] Associative Array binding
-# [return] String
+# [param] Integer role_size
+# [param] Associative Array options
+# [return] void
 #
-function options(binding) {
-  opts = ""
+function options_by_roles(binding, role_size, options,      member) {
+  member = ""
+  split("", options)
 
-  for (key in binding) {
-    if (key == "member") {
-      opts = opts " --member " account(binding[key])
-    } else if (key ~ /^role/) {
-      opts = opts " --role " binding[key]
-    }
+  for (i = 0; i < role_size; i++) {
+    options[i] = " --member " account(binding["member"]) " --role " binding["role", i]
   }
-
-  print opts
-  return opts
 }
 
 #
@@ -123,7 +127,7 @@ function custom_service_account(name,     trimmed_name) {
   trimmed_name = name
   sub(/^service_account:/, "", trimmed_name)
 
-  return trimmed_name "@" project_number ".iam.gserviceaccount.com"
+  return trimmed_name "@" project_id ".iam.gserviceaccount.com"
 }
 
 #
@@ -230,7 +234,7 @@ function split_to_assoc(record, assoc,    lines, roles) {
       roles[size] = line
       size++
     } else if (is_account_line(line)) {
-      member = trim_resource_type(line)
+      member = line
     }
   }
 
