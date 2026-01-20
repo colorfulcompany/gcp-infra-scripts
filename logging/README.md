@@ -10,7 +10,7 @@
 ### Usage
 
 ```
-awk -v project_id=<..> -f create.awk sink.txt
+awk -v project_id=<..> -f sink-creator.awk sink.txt
 ```
 
 ### sink.txt format
