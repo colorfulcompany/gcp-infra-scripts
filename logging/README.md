@@ -26,7 +26,7 @@ awk -v project_id=<..> -f create.awk sink.txt
 
 ```
 name: audit-logs-sink
-destination: storage.googleapis.com/PROJECT_ID-audit-logs
+destination: storage.googleapis.com/:PROJECT_ID-audit-logs
 log-filter: protoPayload.serviceName="cloudaudit.googleapis.com"
 ```
 
@@ -34,7 +34,7 @@ log-filter: protoPayload.serviceName="cloudaudit.googleapis.com"
 
 ```
 name: app-logs-sink
-destination: bigquery.googleapis.com/projects/PROJECT_ID/datasets/app_logs
+destination: bigquery.googleapis.com/projects/:PROJECT_ID/datasets/app_logs
 log-filter: resource.type="gce_instance"
 use-partitioned-tables: true
 ```
@@ -43,11 +43,11 @@ use-partitioned-tables: true
 
 ```
 name: error-logs-sink
-destination: storage.googleapis.com/PROJECT_ID-error-logs
+destination: storage.googleapis.com/:PROJECT_ID-error-logs
 log-filter: severity>=ERROR
 
 name: security-logs-sink
-destination: bigquery.googleapis.com/projects/PROJECT_ID/datasets/security_logs
+destination: bigquery.googleapis.com/projects/:PROJECT_ID/datasets/security_logs
 log-filter: protoPayload.serviceName="cloudaudit.googleapis.com" AND protoPayload.methodName!="storage.objects.get"
 use-partitioned-tables: true
 ```
