@@ -10,7 +10,7 @@ BEGIN {
   true = 1
   false = 0
   gcloud_cmd = "gcloud logging sinks"
-  read_jobs(jobs)
+  read_sinks(sinks)
 
   RS = ""
 }
@@ -19,13 +19,13 @@ BEGIN {
 # main
 #
 {
-  split_to_assoc($0, job)
-  state = jobs[job["name"]]
+  split_to_assoc($0, sink)
+  state = sinks[sink["name"]]
 
   if (length(state) > 0) {
-    update_job(job)
+    update_sink(sink)
   } else {
-    create_job(job)
+    create_sink(sink)
   }
 }
 
@@ -34,19 +34,19 @@ BEGIN {
 #
 function usage() {
   print "Usage:"
-  print "awk -v project_id=<..> -f create.awk sink.txt"
+  print "awk -v project_id=<..> -f sink-creator.awk sink.txt"
 }
 
 #
 # ID   ....  STATE
-# job1       ENABLED
-# job2       PAUSE
+# sink1      ENABLED
+# sink2      PAUSE
 #
-# -> { job2: "ENABLED", job2: "PAUSE" }
+# -> { sink2: "ENABLED", sink2: "PAUSE" }
 #
-# [param] Associative Array jobs
+# [param] Associative Array sinks
 #
-function read_jobs(jobs) {
+function read_sinks(sinks) {
   header = true
 
   cmd = gcloud_cmd " list"
@@ -58,74 +58,74 @@ function read_jobs(jobs) {
 
     $0 = line
     # ID = STATE
-    jobs[$1] = $NF
+    sinks[$1] = $NF
 
     line_num++
   }
 }
 
-function create_job(job) {
-  print gcloud_cmd " create " job["name"] " " destination(job) " " build_options(job) " " use_partitioned_tables(job)
-  system(gcloud_cmd " create " job["name"] " " destination(job) " " build_options(job) " " use_partitioned_tables(job))
-  grant_service_account_to_write(job)
+function create_sink(sink) {
+  print gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
+  system(gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))
+  grant_service_account_to_write(sink)
 }
 
-function update_job(job) {
-  print gcloud_cmd " update " job["name"] " " destination(job) " " build_options(job) " " use_partitioned_tables(job)
-  system(gcloud_cmd " update " job["name"] " " destination(job) " " build_options(job)) " " use_partitioned_tables(job)
-  grant_service_account_to_write(job)
+function update_sink(sink) {
+  print gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
+  system(gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink)) " " use_partitioned_tables(sink)
+  grant_service_account_to_write(sink)
 }
 
-function grant_service_account_to_write(job) {
-  if (role_for_destination(job)) {
-    writer = writer_identity(job)
-    print "Assign " role_for_destination(job) " to " writer
-    system("gcloud projects add-iam-policy-binding " project_id " --member=" writer " --role=" role_for_destination(job))
+function grant_service_account_to_write(sink) {
+  if (role_for_destination(sink)) {
+    writer = writer_identity(sink)
+    print "Assign " role_for_destination(sink) " to " writer
+    system("gcloud projects add-iam-policy-binding " project_id " --member=" writer " --role=" role_for_destination(sink))
   }
 }
 
-function writer_identity(job) {
-  (gcloud_cmd " describe " job["name"] " --format='value(writerIdentity)'") | getline writer
+function writer_identity(sink) {
+  (gcloud_cmd " describe " sink["name"] " --format='value(writerIdentity)'") | getline writer
   return writer
 }
 
-function role_for_destination(job) {
-  if (destination(job) ~ /^storage.googleapis.com\/.+$/) {
+function role_for_destination(sink) {
+  if (destination(sink) ~ /^storage.googleapis.com\/.+$/) {
     return "roles/storage.objectCreator"
-  } else if (destination(job) ~ /^bigquery.googleapis.com\/.+$/) {
+  } else if (destination(sink) ~ /^bigquery.googleapis.com\/.+$/) {
     return "roles/bigquery.dataEditor"
   } else {
     return false
   }
 }
 
-function destination(job) {
-  sub(":PROJECT_ID", project_id, job["destination"])
-  return job["destination"]
+function destination(sink) {
+  sub(":PROJECT_ID", project_id, sink["destination"])
+  return sink["destination"]
 }
 
-function use_partitioned_tables(job) {
-  if (job["use-partitioned-tables"] == "true") {
+function use_partitioned_tables(sink) {
+  if (sink["use-partitioned-tables"] == "true") {
     return "--use-partitioned-tables"
   }
 }
 
 #
-# schedule の内容を gcloud コマンドの option で表現するために文字列に
+# sink の内容を gcloud コマンドの option で表現するために文字列に
 # 組み立てて返す
 #
-# [param] Accociative Array job
+# [param] Accociative Array sink
 # [return] String
 #
-function build_options(job) {
+function build_options(sink) {
   opts = ""
 
-  for (key in job) {
+  for (key in sink) {
     if (key != "name" && key != "destination" && key != "use-partitioned-tables") {
-      if (job[key] == true || job[key] == false) {
+      if (sink[key] == true || sink[key] == false) {
         opts = opts " --" key
       } else {
-        opts = opts " --" key "='" job[key] "'"
+        opts = opts " --" key "='" sink[key] "'"
       }
     }
   }
