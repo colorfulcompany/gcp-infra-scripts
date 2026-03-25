@@ -50,7 +50,7 @@ function define() {
       if (resources[pos] == binding["resource"]) break
     }
 
-    if (resource == "acount") {
+    if (resource == "account") {
       cmd = cmd_write[pos] " " project_id options[i] " > /dev/null"
     } else {
       cmd = cmd_write[pos] " " options[i] " > /dev/null"
@@ -63,9 +63,13 @@ function define() {
   if (resource == "account") {
     cmd = cmd_read[pos] " " project_id
   } else {
-    split(options[0], c, / +/)
+    match(binding["target"], /--region [^ ]+/)
+    region = (RSTART ? substr(binding["target"], RSTART, RLENGTH) : "")
 
-    cmd = cmd_read[pos] " " c[1]
+    match(binding["target"], /^[^ ]+/)
+    service = substr(binding["target"], RSTART, RLENGTH)
+
+    cmd = cmd_read[pos] " " service " " region
   }
   print cmd
   system(cmd)
