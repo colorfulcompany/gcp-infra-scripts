@@ -50,7 +50,7 @@ function define() {
       if (resources[pos] == binding["resource"]) break
     }
 
-    if (resource == "acount") {
+    if (resource == "account") {
       cmd = cmd_write[pos] " " project_id options[i] " > /dev/null"
     } else {
       cmd = cmd_write[pos] " " options[i] " > /dev/null"
