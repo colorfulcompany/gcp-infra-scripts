@@ -12,7 +12,7 @@ awk -v project_id=<..> -v project_number=<..> -f add-iam-binding.awk bindings.tx
  * member and roles are listed raw string
  * some service accounts are expended to a canonical address complemented by the project id
 
-### example
+#### account (project-level IAM)
 
 ```
 appspot.gserviceaccount.com
@@ -28,12 +28,29 @@ gcp-sa-artifactregistry
 roles/storage.objectViewer
 ```
 
-or 
+or
 
 ```
 user:foobar@example.com
 roles/storage.objectAdmin
 roles/editor
+```
+
+#### run_service (Cloud Run service-level IAM)
+
+Use `run_service:<service-name>` as the first line, followed by gcloud flags and roles.
+`--region` is required.
+
+```
+run_service:my-service --region asia-northeast1 --member allUsers
+roles/run.invoker
+```
+
+To add IAM binding without overwriting existing conditional bindings, append `--condition=None`:
+
+```
+run_service:my-service --region asia-northeast1 --member allUsers --condition=None
+roles/run.invoker
 ```
 
 ### special service accounts

@@ -3,3 +3,6 @@
 .DS_Store
 .env
 .envrc
+/.ruby-lsp/
+/.lean-spec/
+/specs/
