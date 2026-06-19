@@ -126,7 +126,7 @@ function find_resource(resource, resources) {
 function create_instance(instance, cmd) {
   cmd = gcloud_cmd " create "
 
-  system(cmd instance["name"] options(instance))
+  if (system(cmd instance["name"] options(instance))) exit 1
 }
 
 #

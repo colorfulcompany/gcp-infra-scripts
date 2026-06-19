@@ -163,7 +163,7 @@ function find_resource(resource, resources) {
 function create_database(database, cmd) {
   cmd = gcloud_cmd " databases create "
 
-  system(cmd database["name"] options(database))
+  if (system(cmd database["name"] options(database))) exit 1
 }
 
 #

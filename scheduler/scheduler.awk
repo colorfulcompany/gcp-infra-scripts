@@ -86,7 +86,7 @@ function create_job(job) {
   if (dry_run) {
     print "will not execute create_job"
   } else {
-    system(gcloud_cmd " create " job["type"] " " job["id"] build_options(job))
+    if (system(gcloud_cmd " create " job["type"] " " job["id"] build_options(job))) exit 1
   }
 }
 
@@ -95,7 +95,7 @@ function update_job(job) {
   if (dry_run) {
     print "will not execute update_job"
   } else {
-    system(gcloud_cmd " update " job["type"] " " job["id"] build_options(job))
+    if (system(gcloud_cmd " update " job["type"] " " job["id"] build_options(job))) exit 1
   }
 }
 
