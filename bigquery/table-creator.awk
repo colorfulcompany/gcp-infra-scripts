@@ -242,7 +242,7 @@ function dump_assoc(assoc) {
 function create_table(table,     cmd) {
   cmd = "bq mk --table" 
 
-  system(cmd options(table) " " table_name(table))
+  if (system(cmd options(table) " " table_name(table))) exit 1
 }
 
 #
@@ -251,9 +251,8 @@ function create_table(table,     cmd) {
 #
 function update_schema(table, filename,     exit_status) {
   exit_status = system("bq update " table_name(table) " " filename)
-  if (!exit_status) {
-    print "    schema updated."
-  }
+  if (exit_status) exit 1
+  print "    schema updated."
 }
 
 # 

@@ -72,7 +72,7 @@ function define() {
     cmd = cmd_read[pos] " " service " " region
   }
   print cmd
-  system(cmd)
+  if (system(cmd)) exit 1
 }
 
 function command(resource) {

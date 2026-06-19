@@ -66,13 +66,13 @@ function read_sinks(sinks) {
 
 function create_sink(sink) {
   print gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
-  system(gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))
+  if (system(gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))) exit 1
   grant_service_account_to_write(sink)
 }
 
 function update_sink(sink) {
   print gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
-  system(gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink)) " " use_partitioned_tables(sink)
+  if (system(gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))) exit 1
   grant_service_account_to_write(sink)
 }
 
@@ -80,7 +80,7 @@ function grant_service_account_to_write(sink) {
   if (role_for_destination(sink)) {
     writer = writer_identity(sink)
     print "Assign " role_for_destination(sink) " to " writer
-    system("gcloud projects add-iam-policy-binding " project_id " --member=" writer " --role=" role_for_destination(sink))
+    if (system("gcloud projects add-iam-policy-binding " project_id " --member=" writer " --role=" role_for_destination(sink))) exit 1
   }
 }
 

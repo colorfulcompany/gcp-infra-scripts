@@ -129,7 +129,7 @@ function dataset_name(name) {
 # [param] Associative Array dataset
 #
 function create_dataset(dataset) {
-  system("bq" location_option(dataset) " mk --dataset" options(dataset) " " dataset_name(dataset["name"]))
+  if (system("bq" location_option(dataset) " mk --dataset" options(dataset) " " dataset_name(dataset["name"]))) exit 1
 }
 
 #
