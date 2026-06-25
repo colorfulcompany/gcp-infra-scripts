@@ -21,11 +21,6 @@ BEGIN {
 {
   split_to_assoc($0, sink)
 
-  if (!sink["service-account"]) {
-    print "Error: 'service-account' is required. See README.md for setup instructions."
-    exit 1
-  }
-
   state = sinks[sink["name"]]
 
   if (length(state) > 0) {
@@ -71,17 +66,22 @@ function read_sinks(sinks) {
 }
 
 function create_sink(sink) {
-  sa = resolve_service_account(sink)
-  cmd = gcloud_cmd " create " sink["name"] " " destination(sink) " --custom-writer-identity=" sa " " build_options(sink) " " use_partitioned_tables(sink)
+  cmd = gcloud_cmd " create " sink["name"] " " destination(sink) " " writer_identity_option(sink) " " build_options(sink) " " use_partitioned_tables(sink)
   print cmd
   if (system(cmd)) exit 1
 }
 
 function update_sink(sink) {
-  sa = resolve_service_account(sink)
-  cmd = gcloud_cmd " update " sink["name"] " " destination(sink) " --custom-writer-identity=" sa " " build_options(sink) " " use_partitioned_tables(sink)
+  cmd = gcloud_cmd " update " sink["name"] " " destination(sink) " " writer_identity_option(sink) " " build_options(sink) " " use_partitioned_tables(sink)
   print cmd
   if (system(cmd)) exit 1
+}
+
+function writer_identity_option(sink) {
+  if (sink["service-account"]) {
+    return "--custom-writer-identity=" resolve_service_account(sink)
+  }
+  return ""
 }
 
 function resolve_service_account(sink) {
