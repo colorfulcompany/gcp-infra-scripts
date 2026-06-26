@@ -19,6 +19,7 @@ awk -v project_id=<..> -f sink-creator.awk sink.txt
  * sink configuration : YAML-like tagged ( separator is `: ` not `:` )
  * destination supports Cloud Storage buckets and BigQuery datasets
  * use PROJECT_ID placeholder in destination for dynamic project substitution
+ * `gcloud` options are written **without** the `--` prefix — the script prepends `--` automatically
 
 ### example
 
