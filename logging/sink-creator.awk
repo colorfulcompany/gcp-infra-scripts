@@ -20,6 +20,7 @@ BEGIN {
 #
 {
   split_to_assoc($0, sink)
+
   state = sinks[sink["name"]]
 
   if (length(state) > 0) {
@@ -65,38 +66,30 @@ function read_sinks(sinks) {
 }
 
 function create_sink(sink) {
-  print gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
-  if (system(gcloud_cmd " create " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))) exit 1
-  grant_service_account_to_write(sink)
+  cmd = gcloud_cmd " create " sink["name"] " " destination(sink) " " writer_identity_option(sink) " " build_options(sink) " " use_partitioned_tables(sink)
+  print cmd
+  if (system(cmd)) exit 1
 }
 
 function update_sink(sink) {
-  print gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink)
-  if (system(gcloud_cmd " update " sink["name"] " " destination(sink) " " build_options(sink) " " use_partitioned_tables(sink))) exit 1
-  grant_service_account_to_write(sink)
+  cmd = gcloud_cmd " update " sink["name"] " " destination(sink) " " writer_identity_option(sink) " " build_options(sink) " " use_partitioned_tables(sink)
+  print cmd
+  if (system(cmd)) exit 1
 }
 
-function grant_service_account_to_write(sink) {
-  if (role_for_destination(sink)) {
-    writer = writer_identity(sink)
-    print "Assign " role_for_destination(sink) " to " writer
-    if (system("gcloud projects add-iam-policy-binding " project_id " --member=" writer " --role=" role_for_destination(sink))) exit 1
+function writer_identity_option(sink) {
+  if (sink["service-account"]) {
+    return "--custom-writer-identity=" resolve_service_account(sink)
   }
+  return ""
 }
 
-function writer_identity(sink) {
-  (gcloud_cmd " describe " sink["name"] " --format='value(writerIdentity)'") | getline writer
-  return writer
-}
-
-function role_for_destination(sink) {
-  if (destination(sink) ~ /^storage.googleapis.com\/.+$/) {
-    return "roles/storage.objectCreator"
-  } else if (destination(sink) ~ /^bigquery.googleapis.com\/.+$/) {
-    return "roles/bigquery.dataEditor"
-  } else {
-    return false
+function resolve_service_account(sink) {
+  sa = sink["service-account"]
+  if (sa !~ /@/) {
+    sa = sa "@" project_id ".iam.gserviceaccount.com"
   }
+  return "serviceAccount:" sa
 }
 
 function destination(sink) {
@@ -121,7 +114,7 @@ function build_options(sink) {
   opts = ""
 
   for (key in sink) {
-    if (key != "name" && key != "destination" && key != "use-partitioned-tables") {
+    if (key != "name" && key != "destination" && key != "use-partitioned-tables" && key != "service-account") {
       if (sink[key] == true || sink[key] == false) {
         opts = opts " --" key
       } else {
